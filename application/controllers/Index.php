@@ -10,7 +10,12 @@ class IndexController extends base_controller
 {
     public function indexAction()
     {
-        $this->_view->assign('name','Jaackie');
+        __d(resultModel::instance()->find(1));
+    }
+
+    public function displayAction()
+    {
+        $this->_view->assign('name', 'Jaackie');
         $this->_view->name = 'Jaackie';
         $this->display('index');
     }
