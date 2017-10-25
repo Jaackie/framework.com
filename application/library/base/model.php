@@ -8,6 +8,10 @@
  */
 class base_model
 {
+    /**
+     * 表名
+     * @var string
+     */
     protected $__table_name = '';
 
 

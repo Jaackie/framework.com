@@ -10,7 +10,7 @@ class IndexController extends base_controller
 {
     public function indexAction()
     {
-        __d(resultModel::instance()->find(1));
+        __d(apiInfoModel::instance()->find(1));
     }
 
     public function displayAction()

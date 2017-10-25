@@ -72,7 +72,12 @@ class Table
     /**
      * @var Table
      */
-    private static $_instance;
+    private static $_instance = null;
+
+    /**
+     * @var Database $_dbInstance
+     */
+    private static $_dbInstance = null;
 
     /**
      * Table constructor.
@@ -150,7 +155,7 @@ class Table
         }
 
         foreach ($inCon as $val) {
-            $param_name = ":_where_in_{$field}_{$i}";
+            $param_name = ":_wi_{$field}_{$i}";
             $in_arr[] = $param_name;
             $this->_params[$param_name] = $val;
             $i++;
@@ -172,7 +177,7 @@ class Table
      */
     public function whereField($field, $value, $expression = '=', $connect = 'and')
     {
-        $param_name = ":_where_field_{$field}";
+        $param_name = ":_wf_{$field}";
         $where = self::_transFields($field);
 
         $where .= " {$expression} {$param_name}";
@@ -193,8 +198,8 @@ class Table
      */
     public function whereBetween($field, $min, $max, $connect = 'and')
     {
-        $param_name_min = ":_where_between_min_{$field}";
-        $param_name_max = ":_where_between_max_{$field}";
+        $param_name_min = ":_wbl_{$field}";
+        $param_name_max = ":_wbu_{$field}";
         $field = self::_transFields($field);
 
         $this->where("{$field} between {$param_name_min} and {$param_name_max}", $connect);
@@ -217,7 +222,7 @@ class Table
         if ($this->_set) $this->_set .= ', ';
 
         $trans_field = self::_transFields($field);
-        $param_name = ":_set_{$field}";
+        $param_name = ":_s_{$field}";
         if ($expression) {
             $this->_set .= " {$trans_field} = $trans_field {$expression} {$param_name}";
         } else {
@@ -353,7 +358,7 @@ class Table
         $this->_dealFields();
         $this->_sql = "select {$this->_fields} from {$this->table}";
         $this->_makeSql();
-        $result = $this->queryWithParams($this->_sql, $this->_params);
+        $result = $this->query($this->_sql, $this->_params);
         return $result ? $result : [];
     }
 
@@ -375,7 +380,7 @@ class Table
     {
         $this->_sql = "select count(1) as `rows` from {$this->table}";
         $this->_makeSql();
-        $result = $this->queryWithParams($this->_sql, $this->_params);
+        $result = $this->query($this->_sql, $this->_params);
         return $result ? intval($result[0]['rows']) : $result;
     }
 
@@ -402,7 +407,7 @@ class Table
         $this->_dealFields();
         $this->_sql = "insert into {$this->table} ({$this->_fields}) values ({$values_str})"
             . self::_onDuplicate($onDuplicate);
-        $result = $this->executeWithParams($this->_sql, $this->_params);
+        $result = $this->execute($this->_sql, $this->_params);
         if ($lastId) {
             $result = self::dbInstance()->lastInsertId();
         }
@@ -463,7 +468,7 @@ class Table
         $this->_sql .= implode(',', $values);
         $this->_sql .= self::_onDuplicate($onDuplicate);
 
-        return $this->executeWithParams($this->_sql, $this->_params);
+        return $this->execute($this->_sql, $this->_params);
     }
 
     /**
@@ -475,7 +480,7 @@ class Table
     {
         $this->_sql = "update {$this->table} set {$this->_set}";
         $this->_makeSql();
-        return $this->executeWithParams($this->_sql, $this->_params);
+        return $this->execute($this->_sql, $this->_params);
     }
 
     /**
@@ -511,7 +516,7 @@ class Table
 
         $this->_sql .= "else {$trans_field} end {$this->_where}";
 
-        return $this->executeWithParams($this->_sql, $this->_params);
+        return $this->execute($this->_sql, $this->_params);
     }
 
     /**
@@ -523,7 +528,7 @@ class Table
     {
         $this->_sql = "delete from {$this->table}";
         $this->_makeSql();
-        return $this->executeWithParams($this->_sql, $this->_params);
+        return $this->execute($this->_sql, $this->_params);
     }
 
     /**
@@ -553,7 +558,7 @@ class Table
      * @param array $params
      * @return array|bool
      */
-    public function queryWithParams($sql, $params = [])
+    public function query($sql, $params = [])
     {
         $this->_sqlDebug();
         $res = self::dbInstance()->query($sql, $params);
@@ -566,7 +571,7 @@ class Table
      * @param array $params
      * @return int|bool
      */
-    public function executeWithParams($sql, $params = [])
+    public function execute($sql, $params = [])
     {
         $this->_sqlDebug();
         $res = self::dbInstance()->exec($sql, $params);
@@ -612,11 +617,6 @@ class Table
         $this->_limit = '';
         $this->_params = [];
     }
-
-    /**
-     * @var Database $_dbInstance
-     */
-    static private $_dbInstance = null;
 
     /**
      * @Usage self::dbInstance()->query($sql, [$param1, $param2]);
