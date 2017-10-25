@@ -1,1 +1,1 @@
-###å This is my framework based on YAF 
+### This is my framework based on YAF 
